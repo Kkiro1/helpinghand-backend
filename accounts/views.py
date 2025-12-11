@@ -12,7 +12,7 @@ def register_view(request):
     """
     Register a new user
     POST /api/auth/register/
-    
+
     Body: {
         "username": "string",
         "email": "string",
@@ -23,16 +23,16 @@ def register_view(request):
     }
     """
     serializer = RegisterSerializer(data=request.data)
-    
+
     if serializer.is_valid():
         user = serializer.save()
         user_serializer = UserSerializer(user)
-        
+
         return Response({
             'message': 'User registered successfully',
             'user': user_serializer.data
         }, status=status.HTTP_201_CREATED)
-    
+
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -42,20 +42,20 @@ def login_view(request):
     """
     Login user and return JWT tokens
     POST /api/auth/login/
-    
+
     Body: {
         "username": "string",
         "password": "string"
     }
     """
     serializer = LoginSerializer(data=request.data)
-    
+
     if serializer.is_valid():
         validated_data = serializer.validated_data
         user = validated_data['user']
-        
+
         user_serializer = UserSerializer(user)
-        
+
         return Response({
             'message': 'Login successful',
             'user': user_serializer.data,
@@ -64,7 +64,7 @@ def login_view(request):
                 'access': validated_data['access']
             }
         }, status=status.HTTP_200_OK)
-    
+
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -74,13 +74,13 @@ def me_view(request):
     """
     Get current authenticated user profile
     GET /api/auth/me/
-    
+
     Headers: {
         "Authorization": "Bearer <access_token>"
     }
     """
     serializer = UserSerializer(request.user)
-    
+
     return Response({
         'user': serializer.data
     }, status=status.HTTP_200_OK)
