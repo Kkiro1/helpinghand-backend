@@ -12,4 +12,6 @@ urlpatterns = [
 
     # Campaigns
     path('api/', include('campaigns.urls')),
+    path('api/', include('donations.urls')),
+
 ]
