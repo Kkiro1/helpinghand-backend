@@ -1,5 +1,3 @@
-from django.test import TestCase
-
 from django.urls import reverse
 from rest_framework.test import APITestCase
 from rest_framework import status
@@ -7,17 +5,17 @@ from rest_framework import status
 
 class AuthTests(APITestCase):
     def setUp(self):
-        self.register_url = reverse('register')   # from accounts/urls.py
+        self.register_url = reverse('register')
         self.login_url = reverse('login')
         self.me_url = reverse('me')
 
         self.user_data = {
-            "username": "nardeen_test",
-            "email": "nardeen@example.com",
+            "username": "kero_test",
+            "email": "kero@example.com",
             "password": "StrongPass123!",
             "password2": "StrongPass123!",
-            "first_name": "nardeen",
-            "last_name": "raafat",
+            "first_name": "Kerollos",
+            "last_name": "Emad",
         }
 
     def test_register_creates_user(self):
@@ -45,10 +43,10 @@ class AuthTests(APITestCase):
         self.assertIn("refresh", response.data["tokens"])
 
     def test_me_returns_current_user(self):
-        # Register
+        # Register the user first
         self.client.post(self.register_url, self.user_data, format='json')
 
-        # Login to get access token
+        # Login to get an access token
         login_data = {
             "username": self.user_data["username"],
             "password": self.user_data["password"],
@@ -57,10 +55,14 @@ class AuthTests(APITestCase):
             self.login_url, login_data, format='json')
         access = login_response.data["tokens"]["access"]
 
-        # Call /me with Authorization header
+        # Call /api/auth/me/ with Authorization header
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {access}")
+        response = self.client.get(self.me_url)
+
+        # Assertions
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        # Ensure "user" key exists
         self.assertIn("user", response.data)
-        # Compare username inside "user" object
-        self.assertEqual(response.data["user"]
-                         ["username"], self.user_data["username"])
+        self.assertEqual(
+            response.data["user"]["username"],
+            self.user_data["username"]
+        )
