@@ -20,15 +20,28 @@ class OrgCampaignSerializer(serializers.ModelSerializer):
 
 
 class OrgDonationSerializer(serializers.ModelSerializer):
-    campaignId = serializers.SerializerMethodField()
+    # Accept campaignId in request
+    campaignId = serializers.IntegerField(write_only=True, required=False)
 
     class Meta:
         model = OrgDonation
         fields = ['id', 'donor', 'item', 'description', 'campaignId', 'campaign', 'status', 'created_at']
-        read_only_fields = ['id', 'campaignId', 'created_at']
+        read_only_fields = ['id', 'created_at']
 
-    def get_campaignId(self, obj):
-        return obj.campaign_id
+    def validate(self, attrs):
+        if 'campaign' not in attrs and 'campaignId' in attrs:
+            cid = attrs.pop('campaignId')
+            try:
+                attrs['campaign'] = OrgCampaign.objects.get(pk=cid)
+            except OrgCampaign.DoesNotExist:
+                raise serializers.ValidationError({'campaignId': 'Invalid campaign id.'})
+        return attrs
+
+    def to_representation(self, instance):
+        rep = super().to_representation(instance)
+        rep['campaignId'] = instance.campaign_id
+        return rep
+
 
 
 class OrgProfileSerializer(serializers.Serializer):
