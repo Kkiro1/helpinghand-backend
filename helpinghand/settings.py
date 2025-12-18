@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     'corsheaders',
 
     # Local apps
+    'organizations.apps.OrganizationsConfig',
     'accounts.apps.AccountsConfig',
     'campaigns',
     'donations',
