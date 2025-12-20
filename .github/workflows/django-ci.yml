@@ -2,15 +2,18 @@ name: Django CI
 
 on:
   push:
-    branches: [ "main", "develop","devops/**", "feature/**", "fix/**" ]
+    branches: [ "main", "develop", "devops/**", "feature/**", "fix/**" ]
   pull_request:
     branches: [ "main", "develop" ]
 
 jobs:
-
   test:
-    name: Run Django Tests
+    name: Run Django Checks & Tests
     runs-on: ubuntu-latest
+
+    env:
+      DJANGO_SETTINGS_MODULE: helpinghand.settings_ci
+      PYTHONUNBUFFERED: "1"
 
     steps:
       - name: Checkout Repository
@@ -20,29 +23,32 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+          cache: "pip"
 
       - name: Install Dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
+          pip install coverage
 
-      - name: Run Tests
+      # Optional but VERY recommended (fails fast if settings/urls broken)
+      - name: Django system check
         run: |
-          python manage.py test
+          python manage.py check
 
-  deploy:
-    name: Deploy after tests
-    needs: test
-    runs-on: ubuntu-latest
-
-    # Only deploy when pushing to main (not for PRs)
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Deploy Application
+      # Ensures you didn't forget to commit migrations
+      - name: Ensure no missing migrations
         run: |
-          echo "Deploying the application..."
-          echo "Replace this with real deployment commands later"
+          python manage.py makemigrations --check --dry-run
+
+      - name: Run Tests (with coverage)
+        run: |
+          coverage run manage.py test -v 2
+          coverage xml
+          coverage report
+
+      - name: Upload coverage report artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-xml
+          path: coverage.xml
